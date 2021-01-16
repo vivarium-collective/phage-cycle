@@ -100,7 +100,10 @@ class Cell(Composite):
     defaults = {
         'growth': {},
         'replication': {},
-        'daughter_path': tuple()
+        'divide_condition': {
+            'threshold': 1},
+        'daughter_path': tuple(),
+        'agents_path': ('..', '..', 'agents',),
     }
 
     def generate_processes(self, config):
@@ -117,18 +120,28 @@ class Cell(Composite):
         return {
             'growth': Growth(config['growth']),
             'replication': Replication(config['replication']),
-            'divide_condition': DivideCondition(),
+            'divide_condition': DivideCondition(config['divide_condition']),
             'meta_division': MetaDivision(division_config),
-            'burst': Burst(),
+            # 'burst': Burst(),
         }
 
     def generate_topology(self, config):
         return {
-            'growth': {},
-            'replication': {},
-            'divide_condition': {},
-            'meta_division': {},
-            'burst': {}
+            'growth': {
+                'biomass': ('biomass',),
+            },
+            'replication': {
+                'genes': ('genes',),
+            },
+            'divide_condition': {
+                'variable': ('biomass',),
+                'divide': ('divide',),
+            },
+            'meta_division': {
+                'global': ('boundary',),
+                'agents': config['agents_path'],
+            },
+            # 'burst': {}
         }
 
 
@@ -137,7 +150,9 @@ def run_cycle():
     cell_id = 'cell_1'
     phage_id = 'phage_1'
     environment_config = {}
-    cell_config = {}
+    cell_config = {
+        'agent_id': cell_id
+    }
     phage_config = {}
 
     # declare the hierarchy
