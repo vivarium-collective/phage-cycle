@@ -2,7 +2,7 @@
 
 This project uses bigraph operations to simulate a toy model
  of the lytic and lysogenic cycles. This requires phage 
- attachement, gene insertion, gene integration, gene expression, 
+ attachment, gene insertion, gene integration, gene expression, 
  gene replication, cell division, phage assembly, and lysis.
 
 ![phage](doc/_static/Phage.JPG)
