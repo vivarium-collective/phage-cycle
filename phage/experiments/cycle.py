@@ -89,7 +89,7 @@ class Growth(Process):
 
 class Expression(Process):
     defaults = {
-        'expression_rate': 1.0}
+        'expression_rate': 1e-1}
 
     def ports_schema(self):
         return {
@@ -97,10 +97,17 @@ class Expression(Process):
             'genes': {
                 '*': {
                     'activation': {'_default': 0.0},
-                    'copy_number': {'_default': 1}}},
+                    'copy_number': {
+                        '_default': 1,
+                        '_emit': True,
+                    }}},
             'proteins': {
                 '*': {
-                    'count': {'_default': 0},
+                    'count': {
+                        '_default': 0,
+                        '_divider': 'split',
+                        '_emit': True,
+                    },
                     'mw': {'_default': 1}}}}
 
     def next_update(self, timestep, states):
@@ -114,12 +121,13 @@ class Expression(Process):
             protein_created[gene] = self.parameters['expression_rate'] * biomass * timestep * gene_state['activation'] * gene_state['copy_number']
             biomass_used += protein_created[gene] * proteins[gene]['mw']
 
-        return {
+        update = {
             'biomass': -biomass_used,
             'proteins': {
                 protein: {
                     'count': count}
                 for protein, count in protein_created.items()}}
+        return update
 
 class Replication(Process):
     defaults = {}
@@ -223,18 +231,32 @@ def run_cycle():
     }
 
     # configure experiment
-    initial_state = {}
+    initial_state = {
+        'agents': {
+            cell_id: {
+                'genes': {
+                    'A': {
+                        'copy_number': 1.0,
+                        'activation': 1e-3,
+                    }
+                },
+                'proteins': {
+                    'A': {
+                        'mw': 1e-1
+                    }
+                },
+            }
+        }
+    }
     experiment_settings = {
         'initial_state': initial_state}
     cycle_experiment = compose_experiment(
         hierarchy=hierarchy,
         settings=experiment_settings)
 
-    import ipdb; ipdb.set_trace()
-
     cycle_experiment.update(4800.0)
 
-    plot_agents_multigen(cycle_experiment.emitter.get_data(), out_dir='plots')
+    plot_agents_multigen(cycle_experiment.emitter.get_data(), out_dir='out')
 
 if __name__ == '__main__':
     run_cycle()
