@@ -2,6 +2,8 @@ import numpy as np
 from vivarium import DivideCondition, MetaDivision
 from vivarium.core.process import Process, Composite
 
+from vivarium.core.composition import compartment_in_experiment
+
 
 class Growth(Process):
     defaults = {
@@ -137,3 +139,11 @@ class Cell(Composite):
             },
             # 'burst': {}
         }
+
+
+def test_cell():
+    cell_config = {
+        'agent_id': '1',
+        'agents_path': ('agents',)
+    }
+    cell_experiment = compartment_in_experiment(Cell(cell_config))
