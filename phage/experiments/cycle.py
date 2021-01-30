@@ -64,6 +64,8 @@ from vivarium.processes.meta_division import MetaDivision
 from vivarium.processes.divide_condition import DivideCondition
 from vivarium.processes.burst import Burst
 
+from vivarium.plots.agents_multigen import plot_agents_multigen
+
 import numpy as np
 
 class Growth(Process):
@@ -85,6 +87,39 @@ class Growth(Process):
         return {
             'biomass': total_biomass - states['biomass']}
 
+class Expression(Process):
+    defaults = {
+        'expression_rate': 1.0}
+
+    def ports_schema(self):
+        return {
+            'biomass': {},
+            'genes': {
+                '*': {
+                    'activation': {'_default': 0.0},
+                    'copy_number': {'_default': 1}}},
+            'proteins': {
+                '*': {
+                    'count': {'_default': 0},
+                    'mw': {'_default': 1}}}}
+
+    def next_update(self, timestep, states):
+        biomass = states['biomass']
+        genes = states['genes']
+        proteins = states['proteins']
+
+        protein_created = {}
+        biomass_used = 0
+        for gene, gene_state in genes.items():
+            protein_created[gene] = self.parameters['expression_rate'] * biomass * timestep * gene_state['activation'] * gene_state['copy_number']
+            biomass_used += protein_created[gene] * proteins[gene]['mw']
+
+        return {
+            'biomass': -biomass_used,
+            'proteins': {
+                protein: {
+                    'count': count}
+                for protein, count in protein_created.items()}}
 
 class Replication(Process):
     defaults = {}
@@ -93,8 +128,8 @@ class Replication(Process):
         return {
             'genes': {
                 '*': {
-                    'state': 'active',
-                    'number': 1,
+                    'activation': {'_default': 0.0},
+                    'copy_number': {'_default': 1},
                 }
             }
         }
@@ -106,6 +141,7 @@ class Replication(Process):
 class Cell(Composite):
     defaults = {
         'growth': {},
+        'expression': {},
         'replication': {},
         'divide_condition': {
             'threshold': 2},
@@ -126,6 +162,7 @@ class Cell(Composite):
 
         return {
             'growth': Growth(config['growth']),
+            'expression': Expression(config['expression']),
             'replication': Replication(config['replication']),
             'divide_condition': DivideCondition(config['divide_condition']),
             'meta_division': MetaDivision(division_config),
@@ -137,6 +174,10 @@ class Cell(Composite):
             'growth': {
                 'biomass': ('biomass',),
             },
+            'expression': {
+                'biomass': ('biomass',),
+                'genes': ('genes',),
+                'proteins': ('proteins',)},
             'replication': {
                 'genes': ('genes',),
             },
