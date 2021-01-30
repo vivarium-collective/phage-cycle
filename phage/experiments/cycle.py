@@ -3,6 +3,7 @@
 Outline of events:
 1. lysogenic cycle / gene replication
     * DNA replication (without forks)
+    * standard cell growth expression program
     * cell division
 
 2. phage attachment / gene insertion / gene integration
@@ -63,20 +64,26 @@ from vivarium.processes.meta_division import MetaDivision
 from vivarium.processes.divide_condition import DivideCondition
 from vivarium.processes.burst import Burst
 
+import numpy as np
 
 class Growth(Process):
-    defaults = {}
+    defaults = {
+        'growth_rate': 5e-4}
 
     def ports_schema(self):
         return {
             'biomass': {
-                '_default': 1,
+                '_default': 1.0,
                 '_emit': True,
+                '_divider': 'split',
             }
         }
 
     def next_update(self, timestep, states):
-        return {}
+        total_biomass = states['biomass'] * np.exp(self.parameters['growth_rate'] * timestep)
+
+        return {
+            'biomass': total_biomass - states['biomass']}
 
 
 class Replication(Process):
@@ -101,7 +108,7 @@ class Cell(Composite):
         'growth': {},
         'replication': {},
         'divide_condition': {
-            'threshold': 1},
+            'threshold': 2},
         'daughter_path': tuple(),
         'agents_path': ('..', '..', 'agents',),
     }
@@ -135,7 +142,7 @@ class Cell(Composite):
             },
             'divide_condition': {
                 'variable': ('biomass',),
-                'divide': ('divide',),
+                'divide': ('boundary', 'divide',),
             },
             'meta_division': {
                 'global': ('boundary',),
@@ -182,9 +189,11 @@ def run_cycle():
         hierarchy=hierarchy,
         settings=experiment_settings)
 
-
     import ipdb; ipdb.set_trace()
 
+    cycle_experiment.update(4800.0)
+
+    plot_agents_multigen(cycle_experiment.emitter.get_data(), out_dir='plots')
 
 if __name__ == '__main__':
     run_cycle()
