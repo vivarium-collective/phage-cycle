@@ -1,8 +1,8 @@
 import numpy as np
 from vivarium import DivideCondition, MetaDivision
-from vivarium.core.process import Process, Composite
+from vivarium.core.process import Process, Composer
 
-from vivarium.core.composition import compartment_in_experiment
+from vivarium.core.composition import composer_in_experiment
 
 
 class Growth(Process):
@@ -86,7 +86,7 @@ class Replication(Process):
         return {}
 
 
-class Cell(Composite):
+class Cell(Composer):
     defaults = {
         'growth': {},
         'expression': {},
@@ -106,7 +106,7 @@ class Cell(Composite):
             config.get('division', {}),
             daughter_path=daughter_path,
             agent_id=agent_id,
-            generator=self)
+            composer=self)
 
         return {
             'growth': Growth(config['growth']),
@@ -146,4 +146,4 @@ def test_cell():
         'agent_id': '1',
         'agents_path': ('agents',)
     }
-    cell_experiment = compartment_in_experiment(Cell(cell_config))
+    cell_experiment = composer_in_experiment(Cell(cell_config))

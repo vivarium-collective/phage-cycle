@@ -52,7 +52,7 @@ required processes:
 # helper functions for composition
 from vivarium.core.composition import (
     compose_experiment,
-    FACTORY_KEY,
+    COMPOSER_KEY,
 )
 
 # composites
@@ -74,17 +74,17 @@ def run_cycle():
 
     # declare the hierarchy
     hierarchy = {
-        # FACTORY_KEY: {
+        # COMPOSER_KEY: {
         #     'type': Environment,
         #     'config': environment_config},
         'agents': {
             cell_id: {
-                FACTORY_KEY: {
+                COMPOSER_KEY: {
                     'type': Cell,
                     'config': cell_config}
             },
             # phage_id: {
-            #     FACTORY_KEY: {
+            #     COMPOSER_KEY: {
             #         'type': Phage,
             #         'config': phage_config}
             # },

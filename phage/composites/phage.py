@@ -1,4 +1,4 @@
-from vivarium.core.process import Process, Composite
+from vivarium.core.process import Process, Composer
 
 
 class Attachment(Process):
@@ -15,7 +15,7 @@ class Insertion(Process):
         return {}
 
 
-class Phage(Composite):
+class Phage(Composer):
     def generate_processes(self, config):
         return {
             'attachment': Attachment(),
