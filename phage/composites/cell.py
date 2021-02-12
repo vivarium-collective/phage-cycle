@@ -147,3 +147,9 @@ def test_cell():
         'agents_path': ('agents',)
     }
     cell_experiment = composer_in_experiment(Cell(cell_config))
+
+    # import ipdb; ipdb.set_trace()
+
+
+if __name__ == '__main__':
+    test_cell()

@@ -1,4 +1,5 @@
 from vivarium.core.process import Process, Composer
+from vivarium.core.composition import composer_in_experiment
 
 
 class Attachment(Process):
@@ -26,3 +27,18 @@ class Phage(Composer):
             'attachment': {},
             'insertion': {},
         }
+
+
+
+def test_phage():
+    phage_config = {
+        'agent_id': '1',
+        'agents_path': ('agents',)
+    }
+    phage_experiment = composer_in_experiment(Phage(phage_config))
+
+    # import ipdb; ipdb.set_trace()
+
+
+if __name__ == '__main__':
+    test_phage()

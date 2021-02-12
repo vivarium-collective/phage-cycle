@@ -63,7 +63,7 @@ from phage.composites.phage import Phage
 from vivarium.plots.agents_multigen import plot_agents_multigen
 
 
-def run_cycle():
+def test_cycle():
     cell_id = 'cell_1'
     phage_id = 'phage_1'
     environment_config = {}
@@ -121,4 +121,4 @@ def run_cycle():
 
 
 if __name__ == '__main__':
-    run_cycle()
+    test_cycle()
