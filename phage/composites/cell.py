@@ -18,6 +18,10 @@ class Growth(Process):
             }
         }
 
+    def initial_state(self, config):
+        return {
+            'biomass': 1.0}
+
     def next_update(self, timestep, states):
         biomass = states['biomass']
         total_biomass = biomass * np.exp(self.parameters['growth_rate'] * timestep)
@@ -49,6 +53,17 @@ class Expression(Process):
                     },
                     'mw': {'_default': 1}}}}
 
+    def initial_state(self, config):
+        return {
+            'genes': {
+                'growth': {
+                    'activation': 1.0,
+                    'copy_number': 1}},
+            'proteins': {
+                'growth': {
+                    'count': 10,
+                    'mw': 1.0}}}
+
     def next_update(self, timestep, states):
         biomass = states['biomass']
         genes = states['genes']
@@ -70,20 +85,53 @@ class Expression(Process):
 
 
 class Replication(Process):
-    defaults = {}
+    defaults = {
+        'elongation_rate': 10,
+        'nucleotide_mw': 0.01} # base pairs / second
 
     def ports_schema(self):
         return {
+            'biomass': {},
+            'dna_polymerase_position': {
+                '_default': 0.0},
             'genes': {
                 '*': {
                     'activation': {'_default': 0.0},
-                    'copy_number': {'_default': 1},
+                    'copy_number': {
+                        '_default': 1,
+                        '_divider': 'split'},
+                    'length': {'_default': 1000.0},
                 }
             }
         }
 
+    def initial_state(self, config):
+        return {
+            'dna_polymerase_position': 0.0}
+
     def next_update(self, timestep, states):
-        return {}
+        position = states['dna_polymerase_position']
+        position_delta = self.parameters['elongation_rate'] * timestep
+        new_position = position + position_delta
+        biomass_used = position_delta * self.parameters['nucleotide_mw']
+
+        update = {
+            'biomass': -biomass_used,
+            'genes': {}}
+
+        cursor = 0.0
+        for gene_key, gene in states['genes'].items():
+            cursor += gene['length']
+            if position < cursor and cursor <= new_position:
+                update['genes'][gene_key] = {}
+                update['genes'][gene_key]['copy_number'] = states['genes'][gene_key]['copy_number']
+        
+        if new_position >= cursor:
+            update['dna_polymerase_position'] = position_delta - cursor
+        else:
+            update['dna_polymerase_position'] = position_delta
+
+        return update
 
 
 class Cell(Composer):
@@ -127,7 +175,9 @@ class Cell(Composer):
                 'genes': ('genes',),
                 'proteins': ('proteins',)},
             'replication': {
+                'biomass': ('biomass',),
                 'genes': ('genes',),
+                'dna_polymerase_position': ('dna', 'polymerase_position')
             },
             'divide_condition': {
                 'variable': ('biomass',),
@@ -146,9 +196,19 @@ def test_cell():
         'agent_id': '1',
         'agents_path': ('agents',)
     }
-    cell_experiment = composer_in_experiment(Cell(cell_config))
+    cell_composer = Cell(cell_config)
+    initial_state = {
+        'agents': {
+            '1': cell_composer.initial_state()}}
 
-    # import ipdb; ipdb.set_trace()
+    cell_experiment = composer_in_experiment(
+        cell_composer,
+        initial_state=initial_state,
+        outer_path=('agents', '1'))
+
+    cell_experiment.update(101)
+
+    import ipdb; ipdb.set_trace()
 
 
 if __name__ == '__main__':

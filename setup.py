@@ -7,7 +7,7 @@ with open("README.md", 'r') as readme:
     long_description = readme.read()
 
 setup(
-    name='',  # TODO: Put your package name here.
+    name='phage_cycle', 
     version='0.0.1',
     packages=[
         # TODO: Replace 'phage' with the name of your folder.
@@ -28,7 +28,7 @@ setup(
     package_data={},
     include_package_data=True,
     install_requires=[
-        'vivarium-core',
+        'vivarium-core>=0.2.0',
         # TODO: Add other dependencies.
     ],
 )
