@@ -10,11 +10,11 @@ setup(
     name='phage_cycle', 
     version='0.0.1',
     packages=[
-        # TODO: Replace 'phage' with the name of your folder.
-        'phage',
-        'phage.processes',
-        'phage.composites',
-        'phage.experiments',
+        # TODO: Replace 'phage_cycle' with the name of your folder.
+        'phage_cycle',
+        'phage_cycle.processes',
+        'phage_cycle.composites',
+        'phage_cycle.experiments',
     ],
     author='',  # TODO: Put your name here.
     author_email='',  # TODO: Put your email here.

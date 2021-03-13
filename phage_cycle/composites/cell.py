@@ -9,6 +9,9 @@ class Growth(Process):
     defaults = {
         'growth_rate': 5e-4}
 
+    def __init__(self, parameters=None):
+        super().__init__(parameters)
+
     def ports_schema(self):
         return {
             'biomass': {
@@ -20,14 +23,14 @@ class Growth(Process):
 
     def initial_state(self, config):
         return {
-            'biomass': 1.0}
+            'biomass': 10.0}
 
     def next_update(self, timestep, states):
         biomass = states['biomass']
         total_biomass = biomass * np.exp(self.parameters['growth_rate'] * timestep)
-
+        delta_biomass = total_biomass - states['biomass']
         return {
-            'biomass': total_biomass - states['biomass']}
+            'biomass': delta_biomass}
 
 
 class Expression(Process):
@@ -140,9 +143,9 @@ class Cell(Composer):
         'expression': {},
         'replication': {},
         'divide_condition': {
-            'threshold': 2},
+            'threshold': 20},
         'daughter_path': tuple(),
-        'agents_path': ('..', '..', 'agents',),
+        'agents_path': tuple(),
     }
 
     def generate_processes(self, config):
@@ -194,7 +197,8 @@ class Cell(Composer):
 def test_cell():
     cell_config = {
         'agent_id': '1',
-        'agents_path': ('agents',)
+        'agents_path': ('agents',),
+        'growth': {'growth_rate': 1e-1},
     }
     cell_composer = Cell(cell_config)
     initial_state = {
@@ -206,9 +210,9 @@ def test_cell():
         initial_state=initial_state,
         outer_path=('agents', '1'))
 
-    cell_experiment.update(101)
+    cell_experiment.update(10)
 
-    import ipdb; ipdb.set_trace()
+    timeseries = cell_experiment.emitter.get_timeseries()
 
 
 if __name__ == '__main__':

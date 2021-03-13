@@ -1,5 +1,27 @@
+import uuid
 from vivarium.core.process import Process, Composer
 from vivarium.core.composition import composer_in_experiment
+
+
+
+class Phage(Composer):
+    """
+    TODO -- configure cell_path
+    """
+    defaults = {
+        'cells_path': tuple()
+    }
+    def generate_processes(self, config):
+        return {
+            'attachment': AttachInsert(),
+        }
+    def generate_topology(self, config):
+        return {
+            'attachment': {
+                'attach': ('attach',),
+                'cells': config['cells_path'],
+            },
+        }
 
 
 class Activation(Process):
@@ -18,20 +40,33 @@ class Activation(Process):
     def ports_schema(self):
         return {
             'protein': {
-                'phage': {},
+                'phage': {
+                    'count': {
+                        '_default': 0
+                    }
+                },
+            },
+            'phages': {
+                '*': {}
             }
         }
     def next_update(self, timestep, states):
         # once sufficient phage protein is found, generate a Phage
         if states['protein']['phage']['count'] > self.parameters['threshold']:
+            # TODO -- remove the phage cycle protein
+            phage_id = str(uuid.uuid4())
+
             composite = self.composer.generate({})
             return {
-                '_generate': {
-                    'processes': composite['processes'],
-                    'topology': composite['topology'],
-                    'initial_state': {}
-                }
-            }
+                'phages': {
+                    '_generate': [{
+                        'key': phage_id,
+                        'processes': composite['processes'],
+                        'topology': composite['topology'],
+                        'initial_state': {}
+                    }]
+            }}
+        return {}
 
 
 class AttachInsert(Process):
@@ -44,16 +79,17 @@ class AttachInsert(Process):
 
     def __init__(self, parameters=None):
         super().__init__(parameters)
-        self.composer = self.parameters['composer']
+        self.composer = self.parameters['composer']()
 
     def ports_schema(self):
         return {
             'attach': {
+                '_updater': 'set',
                 '_default': None},
             'cells': {
                 '*': {
                     'genes': {},
-                    'proteins': {},
+                    'proteins': {}
                 }
             },
         }
@@ -66,30 +102,24 @@ class AttachInsert(Process):
                 # add genes and proteins to the cell
                 'cells': {
                     states['attach']: {
-                        '_add': [
-                            {'key': 'genes', 'state': 'phage'},
-                            {'key': 'proteins', 'state': 'phage'},
-                        ],
-                        '_generate': {
+                        'genes': {
+                            '_add': [{'key': 'phage', 'state': {'copy_number': 1}}]
+                        },
+                        'proteins': {
+                            '_add': [{'key': 'phage', 'state': {'count': 0}}]
+                        },
+                        '_generate': [{
                             'processes': composite['processes'],
                             'topology': composite['topology'],
-                            'initial_state': {}
-                        }
+                            'initial_state': {}}
+                        ]
                     }
-                }
+                },
+                'attach': False
             }
         return {}
 
 
-class Phage(Composer):
-    def generate_processes(self, config):
-        return {
-            'attachment': AttachInsert(),
-        }
-    def generate_topology(self, config):
-        return {
-            'attachment': {},
-        }
 
 
 
