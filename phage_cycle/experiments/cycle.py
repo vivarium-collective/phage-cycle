@@ -70,6 +70,7 @@ def test_cycle():
         'agent_id': cell_id,
         'agents_path': ('..', '..', 'cells',),
     })
+
     phage_composer = Phage({
         'agent_id': phage_id,
         'cells_path': ('..', '..', 'cells',),})
@@ -78,7 +79,9 @@ def test_cycle():
         'timeline': [
             (10, {('phages', phage_id, 'attach'): cell_id})]
     }
-    # TODO -- replace timeline with a "neighbors" process that finds.
+
+    # TODO -- replace timeline with a "neighbors" process where
+    #   each phage stochastically attaches to a cell.
     timeline_process = TimelineProcess(timeline_config)
     timeline_composite = timeline_process.generate()
 
@@ -92,11 +95,11 @@ def test_cycle():
     settings = {}
     exp = composite_in_experiment(cell_composite, settings, initial_state=initial_state)
 
-    exp.update(20)
+    exp.update(30)
 
     timeseries = exp.emitter.get_timeseries()
 
-    # import ipdb; ipdb.set_trace()
+    import ipdb; ipdb.set_trace()
 
 
 if __name__ == '__main__':

@@ -39,10 +39,13 @@ class Activation(Process):
 
     def ports_schema(self):
         return {
-            'protein': {
+            'proteins': {
                 'phage': {
                     'count': {
                         '_default': 0
+                    },
+                    'metabolite_cost': {
+                        '_default': 1.0
                     }
                 },
             },
@@ -52,7 +55,7 @@ class Activation(Process):
         }
     def next_update(self, timestep, states):
         # once sufficient phage protein is found, generate a Phage
-        if states['protein']['phage']['count'] > self.parameters['threshold']:
+        if states['proteins']['phage']['count'] > self.parameters['threshold']:
             # TODO -- remove the phage cycle protein
             phage_id = str(uuid.uuid4())
 
@@ -74,7 +77,10 @@ class AttachInsert(Process):
     This gives the Phage access to a given cell, and generates an Insertion Process inside the cell
     """
     defaults = {
-        'composer': Activation
+        'composer': Activation,
+        'gene_length': {
+            'phage': 20
+        }
     }
 
     def __init__(self, parameters=None):
@@ -85,7 +91,8 @@ class AttachInsert(Process):
         return {
             'attach': {
                 '_updater': 'set',
-                '_default': None},
+                '_default': None,
+                '_emit': True},
             'cells': {
                 '*': {
                     'genes': {},
@@ -98,16 +105,28 @@ class AttachInsert(Process):
         # receive a cell_id to attach insertion's genes and proteins ports.
         if states['attach']:
             composite = self.composer.generate({})
+            genes = [
+                {
+                    'key': key,
+                    'state': {
+                        'copy_number': 1,
+                        'length': length,
+                    }
+                } for key, length in self.parameters['gene_length'].items()
+            ]
+            proteins = [
+                {
+                    'key': key,
+                    'state': {'counts': 0}
+                } for key, length in self.parameters['gene_length'].items()
+            ]
+
             return {
                 # add genes and proteins to the cell
                 'cells': {
                     states['attach']: {
-                        'genes': {
-                            '_add': [{'key': 'phage', 'state': {'copy_number': 1}}]
-                        },
-                        'proteins': {
-                            '_add': [{'key': 'phage', 'state': {'count': 0}}]
-                        },
+                        'genes': {'_add': genes},
+                        'proteins': {'_add': proteins},
                         '_generate': [{
                             'processes': composite['processes'],
                             'topology': composite['topology'],
@@ -118,9 +137,6 @@ class AttachInsert(Process):
                 'attach': False
             }
         return {}
-
-
-
 
 
 def test_phage():
