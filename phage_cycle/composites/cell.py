@@ -103,7 +103,7 @@ class Expression(Process):
         'metabolite_mass': 1.0 * units.fg,
         'genes': {
             'growth': {
-                'initial_activation': 0.0,
+                'initial_activation': 1.0,
                 'initial_copy_number': 1,
                 'length': 20.0,
             }
@@ -190,7 +190,7 @@ class Expression(Process):
 
 class Replication(Process):
     defaults = {
-        'elongation_rate': 10,
+        'elongation_rate': 3,
         'nucleotide_metabolite_cost': 0.01} # base pairs / second
 
     def ports_schema(self):
@@ -198,6 +198,7 @@ class Replication(Process):
             'incomplete_replication': {
                 '_default': 0.0,
                 '_updater': 'set',
+                '_emit': True,
             },
             'dna_polymerase_position': {
                 '_default': 0.0,
@@ -223,6 +224,7 @@ class Replication(Process):
         }
 
     def next_update(self, timestep, states):
+        genes = states['genes']
         position = states['dna_polymerase_position']
         position_delta = self.parameters['elongation_rate'] * timestep
         new_position = position + position_delta
@@ -230,20 +232,27 @@ class Replication(Process):
 
         update = {
             'metabolites': -metabolites_used,
-            'genes': {}}
+            'genes': {}
+        }
 
-        cursor = 0.0
-        incomplete_replication = 0
-        for gene_key, gene in states['genes'].items():
-            copy_number = states['genes'][gene_key]['copy_number']
-            if new_position >= cursor:
-                incomplete_replication = (new_position - cursor) * copy_number
+        first_gene = [gene for gene_key, gene in genes.items()][0]
 
+        cursor = 0
+        incomplete_replication = new_position * first_gene['copy_number']
+        for gene_key, gene in genes.items():
+            copy_number = genes[gene_key]['copy_number']
             cursor += gene['length']
+
             if position < cursor and cursor <= new_position:
                 update['genes'][gene_key] = {
-                    'copy_number': states['genes'][gene_key]['copy_number']
+                    'copy_number': copy_number
                 }
+                copy_number += copy_number
+
+            # comes after copy number assignment so that it uses the new copy number to
+            # determine how much incomplete replication exists
+            if new_position >= cursor:
+                incomplete_replication = (new_position - cursor) * copy_number
         
         if new_position >= cursor:
             update['dna_polymerase_position'] = position_delta - cursor
@@ -291,7 +300,7 @@ class Cell(Composer):
             'expression': Expression(expression_config),
             'replication': Replication(config['replication']),
             'total_biomass': TotalBiomass(biomass_config),
-            'divide_condition': DivideCondition(config['divide_condition']),
+            # 'divide_condition': DivideCondition(config['divide_condition']),
             'meta_division': MetaDivision(division_config),
             # 'burst': Burst(),
         }
@@ -320,10 +329,10 @@ class Cell(Composer):
                 'incomplete_replication': ('dna', 'incomplete_replication',),
                 'proteins': ('proteins',),
             },
-            'divide_condition': {
-                'variable': ('metabolites',),
-                'divide': ('boundary', 'divide',),
-            },
+            # 'divide_condition': {
+            #     'variable': ('biomass',),
+            #     'divide': ('boundary', 'divide',),
+            # },
             'meta_division': {
                 'global': ('boundary',),
                 'agents': config['agents_path'],
@@ -352,6 +361,7 @@ def test_cell():
 
     timeseries = cell_experiment.emitter.get_timeseries()
 
+    import ipdb; ipdb.set_trace()
 
 if __name__ == '__main__':
     test_cell()
