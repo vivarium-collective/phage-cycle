@@ -51,6 +51,7 @@ required processes:
 
 # helper functions for composition
 from vivarium.core.composition import composite_in_experiment
+from vivarium.core.emitter import remove_units, deserialize_value
 from vivarium.processes.timeline import TimelineProcess
 
 # composites
@@ -69,6 +70,9 @@ def test_cycle():
     cell_composer = Cell({
         'agent_id': cell_id,
         'agents_path': ('..', '..', 'cells',),
+        'growth': {
+            'growth_rate': 1e-4
+        }
     })
 
     phage_composer = Phage({
@@ -98,6 +102,20 @@ def test_cycle():
     exp.update(30)
 
     timeseries = exp.emitter.get_timeseries()
+    data = exp.emitter.get_data()
+    data = deserialize_value(data)
+    data = remove_units(data)
+
+    # plot
+    settings = {
+        'agents_key': 'cells'
+    }
+    plot_agents_multigen(
+        data,
+        settings=settings,
+        out_dir='out',
+        filename='phage_cycle')
+
 
     import ipdb; ipdb.set_trace()
 

@@ -87,11 +87,11 @@ class Growth(Process):
         }
 
     def next_update(self, timestep, states):
-        metabolites = states['metabolites']
-        biomass = states['biomass']
-        total_metabolites = biomass.to('fg').magnitude * np.exp(
+        # metabolites = states['metabolites']
+        biomass = states['biomass'].to('fg').magnitude
+        total_metabolites = biomass * np.exp(
             self.parameters['growth_rate'] * timestep)
-        delta_metabolites = total_metabolites - metabolites
+        delta_metabolites = total_metabolites - biomass
         return {
             'metabolites': delta_metabolites
         }
