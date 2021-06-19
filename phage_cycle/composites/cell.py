@@ -1,7 +1,8 @@
 import numpy as np
 
 from vivarium import DivideCondition, MetaDivision
-from vivarium.core.process import Process, Composer, Deriver
+from vivarium.core.process import Process, Deriver
+from vivarium.core.composer import Composer
 from vivarium.library.units import units
 
 from scipy.constants import N_A

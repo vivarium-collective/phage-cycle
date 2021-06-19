@@ -28,7 +28,6 @@ setup(
     package_data={},
     include_package_data=True,
     install_requires=[
-        'vivarium-core>=0.2.0',
-        # TODO: Add other dependencies.
+        'vivarium-core>=0.3.0',
     ],
 )

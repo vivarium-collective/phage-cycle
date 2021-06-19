@@ -1,5 +1,6 @@
 import uuid
-from vivarium.core.process import Process, Composer
+from vivarium.core.process import Process
+from vivarium.core.composer import Composer
 from vivarium.core.composition import composer_in_experiment
 
 
